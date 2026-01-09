@@ -8,6 +8,10 @@ torch>=2.0.0
 
 # Simulation
 mujoco>=3.0.0
+pygame>=2.0.0
+
+# Control & Input
+pynput>=1.7.0
 
 # Visualization
 pillow>=9.0.0
@@ -17,3 +21,4 @@ matplotlib>=3.5.0
 # - LeRobot: pip install -e 'external/lerobot[unitree_g1]'
 # - Isaac Gym: NVIDIA 공식 설치 가이드 참조
 # - Unitree SDK2: CycloneDDS 필요 (https://github.com/unitreerobotics/unitree_sdk2_python)
+# - XR Teleoperation: pip install -r external/xr_teleoperate/requirements.txt
