@@ -1,0 +1,67 @@
+# G1 + Inspire Hand Configuration
+# 이 설정 파일은 각 공식 저장소의 설정을 오버라이드할 때 사용
+
+robot:
+  name: g1_inspire
+  base_model: g1_29dof_rev_1_0
+  hand: inspire_ftp  # inspire_ftp 또는 inspire_dfq
+
+  # DOF 구성
+  dof:
+    legs: 12        # 6 x 2
+    waist: 3
+    arms: 14        # 7 x 2
+    hands: 24       # 12 x 2 (Inspire Hand)
+    total: 53
+
+# 모델 경로
+models:
+  # MuJoCo 모델
+  mujoco_base: external/mujoco_menagerie/unitree_g1/scene.xml
+  mujoco_with_hands: external/unitree_mujoco/unitree_robots/g1/g1_29dof.xml
+
+  # URDF 모델 (Inspire Hand 포함)
+  urdf_inspire_ftp: external/unitree_ros/robots/g1_description/g1_29dof_rev_1_0_with_inspire_hand_FTP.urdf
+  urdf_inspire_dfq: external/unitree_ros/robots/g1_description/g1_29dof_rev_1_0_with_inspire_hand_DFQ.urdf
+
+# 시뮬레이션 설정
+simulation:
+  mujoco:
+    timestep: 0.002       # 500Hz physics
+    control_dt: 0.02      # 50Hz control
+    viewer_dt: 0.02       # 50Hz rendering
+
+  domain_id: 1            # DDS domain (1=sim, 0=real)
+  interface: lo           # 네트워크 인터페이스
+
+# 실제 로봇 설정
+real_robot:
+  ip: 192.168.123.164     # G1 Ethernet IP
+  domain_id: 0
+  interface: eth0
+
+  # ZMQ 브릿지 (LeRobot)
+  zmq_port: 5555
+
+# 학습 설정
+training:
+  rl:
+    algorithm: ppo
+    num_envs: 4096
+    max_iterations: 1000
+
+  il:
+    policy: act           # act, diffusion, pi0
+    chunk_size: 50
+    batch_size: 32
+    epochs: 100
+
+# XR 텔레오퍼레이션
+teleop:
+  device: quest3          # quest3, vision_pro, pico4
+  mode: hand_tracking
+
+  # 손 리타겟팅
+  hand_retarget:
+    enabled: true
+    type: inspire_ftp

@@ -1,0 +1,21 @@
+[submodule "external/unitree_mujoco"]
+	path = external/unitree_mujoco
+	url = https://github.com/unitreerobotics/unitree_mujoco.git
+[submodule "external/unitree_rl_gym"]
+	path = external/unitree_rl_gym
+	url = https://github.com/unitreerobotics/unitree_rl_gym.git
+[submodule "external/unitree_IL_lerobot"]
+	path = external/unitree_IL_lerobot
+	url = https://github.com/unitreerobotics/unitree_IL_lerobot.git
+[submodule "external/xr_teleoperate"]
+	path = external/xr_teleoperate
+	url = https://github.com/unitreerobotics/xr_teleoperate.git
+[submodule "external/lerobot"]
+	path = external/lerobot
+	url = https://github.com/huggingface/lerobot.git
+[submodule "external/unitree_ros"]
+	path = external/unitree_ros
+	url = https://github.com/unitreerobotics/unitree_ros.git
+[submodule "external/mujoco_menagerie"]
+	path = external/mujoco_menagerie
+	url = https://github.com/google-deepmind/mujoco_menagerie.git
