@@ -10,16 +10,26 @@ git clone https://github.com/tgwoo-robotics/UnitreeG1.git
 cd UnitreeG1
 git submodule update --init --recursive
 
-# 2. 환경 설정 (자동)
-chmod +x setup.sh
-./setup.sh
+# 2. Conda 환경 생성
+conda create -n G1 python=3.10 pinocchio=3.1.0 -c conda-forge -y
 
-# 3. 시뮬레이션 시작
+# 3. 패키지 설치
+conda activate G1
+pip install mujoco pygame pynput meshcat sshkeyboard
+pip install git+https://github.com/unitreerobotics/unitree_sdk2_python.git
+pip install -e external/xr_teleoperate/teleop/televuer/
+pip install -r external/xr_teleoperate/requirements.txt
+
+# 4. libstdc++ 호환 설정 (필수)
+mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+echo 'export LD_PRELOAD=$CONDA_PREFIX/lib/libstdc++.so.6' > $CONDA_PREFIX/etc/conda/activate.d/fix_libstdcxx.sh
+
+# 5. NumPy 다운그레이드 (pinocchio 호환)
+pip install 'numpy<2'
+
+# 6. 시뮬레이션 테스트
 cd external/unitree_mujoco/simulate_python
 python unitree_mujoco.py
-
-# 4. 새 터미널에서 상체 제어
-python scripts/sim_upper_body_control.py
 ```
 
 ## 프로젝트 구조
@@ -39,97 +49,119 @@ G1/
 │   ├── sim_upper_body_control.py  # 상체 키보드 제어 (시뮬레이션)
 │   ├── sim_keyboard_control.py    # 전체 키보드 제어 (시뮬레이션)
 │   ├── teleop_hybrid.py           # 하이브리드 텔레옵 (XR + 컨트롤러)
-│   ├── hybrid_televuer.py         # 하이브리드 TeleVuer
-│   ├── run_simulation.py          # 시뮬레이션 설정/실행
-│   └── run_lerobot.py             # LeRobot 실행
+│   └── hybrid_televuer.py         # 하이브리드 TeleVuer
 │
 ├── configs/                     # 설정 파일
-│   └── g1_inspire.yaml
-│
 ├── docs/                        # 문서
-│   └── SIMULATION.md
-│
-├── setup.sh                     # 환경 설정 스크립트
+├── setup.sh                     # 환경 설정 스크립트 (기본)
 └── requirements.txt             # Python 의존성
 ```
 
-## 설치
+## Conda 환경 설정
 
-### 자동 설치 (권장)
+### 자동 설정 (권장)
 
 ```bash
-# Conda 환경 생성
-conda create -n g1 python=3.10 -y
-conda activate g1
+# 환경 생성 (pinocchio + casadi 바인딩 포함)
+conda create -n G1 python=3.10 pinocchio=3.1.0 -c conda-forge -y
+conda activate G1
 
-# 자동 설치
-./setup.sh
+# 필수 패키지
+pip install mujoco pygame pynput meshcat sshkeyboard
+pip install git+https://github.com/unitreerobotics/unitree_sdk2_python.git
+pip install -e external/xr_teleoperate/teleop/televuer/
+pip install -r external/xr_teleoperate/requirements.txt
+
+# libstdc++ 호환 설정
+mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+echo 'export LD_PRELOAD=$CONDA_PREFIX/lib/libstdc++.so.6' > $CONDA_PREFIX/etc/conda/activate.d/fix_libstdcxx.sh
+
+# NumPy 다운그레이드 (pinocchio 호환)
+pip install 'numpy<2'
 ```
 
-### 수동 설치
+### 환경 검증
 
 ```bash
-# 1. 서브모듈 초기화
-git submodule update --init --recursive
-
-# 2. 기본 의존성
-pip install -r requirements.txt
-
-# 3. Unitree SDK2
-cd external/unitree_mujoco/unitree_sdk2_python
-pip install -e .
-cd ../../..
-
-# 4. (선택) LeRobot
-cd external/lerobot
-pip install -e '.[unitree_g1]'
-cd ../..
-
-# 5. (선택) XR Teleoperation
-pip install -r external/xr_teleoperate/requirements.txt
+conda activate G1
+python -c "
+from pinocchio import casadi as cpin
+print('pinocchio + casadi: OK')
+import mujoco
+print('mujoco: OK')
+from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+print('unitree_sdk2py: OK')
+"
 ```
 
 ## 시뮬레이션
 
-### MuJoCo 시뮬레이션
+### MuJoCo 시뮬레이션 시작
 
 ```bash
-# 터미널 1: 시뮬레이션 시작
+conda activate G1
 cd external/unitree_mujoco/simulate_python
 python unitree_mujoco.py
+```
 
-# 터미널 2: 상체 제어
+### 상체 키보드 제어
+
+```bash
+# 다른 터미널
+conda activate G1
 python scripts/sim_upper_body_control.py
 ```
 
-**상체 제어 키:**
-- `↑/↓`: 선택된 관절 +/- 이동
-- `←/→`: 다른 관절 선택
-- `1`: 왼팔 인사 자세
-- `2`: 오른팔 인사 자세
-- `3`: 양팔 들기
-- `0`: 기본 자세
-- `ESC`: 종료
+**조작키:**
+| 키 | 기능 |
+|----|------|
+| `↑/↓` | 선택된 관절 +/- 이동 |
+| `←/→` | 다른 관절 선택 |
+| `1` | 왼팔 인사 자세 |
+| `2` | 오른팔 인사 자세 |
+| `3` | 양팔 들기 |
+| `0` | 기본 자세 |
+| `ESC` | 종료 |
 
 **시뮬레이션 창 키:**
-- `7/8`: ElasticBand 길이 조절
-- `9`: ElasticBand 켜기/끄기
+| 키 | 기능 |
+|----|------|
+| `7/8` | ElasticBand 길이 조절 |
+| `9` | ElasticBand 켜기/끄기 |
 
 ### ElasticBand
 
-시뮬레이션에서는 실제 로봇처럼 내장 균형 제어기가 없습니다.
-**ElasticBand**는 로봇을 가상 밴드로 매달아서 넘어지지 않게 해줍니다.
+시뮬레이션에서는 실제 로봇의 내장 균형 제어기가 없습니다.
+**ElasticBand**가 로봇을 가상 밴드로 매달아 균형을 유지합니다.
 
-`external/unitree_mujoco/simulate_python/config.py`에서:
+설정: `external/unitree_mujoco/simulate_python/config.py`
 ```python
 ENABLE_ELASTIC_BAND = True  # 균형 유지
 ```
 
 ## XR 텔레오퍼레이션 (Meta Quest)
 
-### 하이브리드 텔레옵
+### 기본 실행
 
-손 추적 + 컨트롤러 동시 사용:
+```bash
+conda activate G1
+cd external/xr_teleoperate/teleop
+python teleop_hand_and_arm.py --arm G1_29 --ee inspire_ftp
+```
+
+### 옵션
+
+| 옵션 | 설명 | 기본값 |
+|------|------|--------|
+| `--arm` | 로봇 타입 | `G1_29` |
+| `--ee` | 손 타입 | `inspire_ftp` |
+| `--input-mode` | 입력 모드 (`hand`/`controller`) | `hand` |
+| `--display-mode` | 디스플레이 모드 | `immersive` |
+| `--sim` | 시뮬레이션 모드 | - |
+| `--motion` | 하체 이동 활성화 | - |
+| `--headless` | 헤드리스 모드 | - |
+
+### 하이브리드 텔레옵 (손 추적 + 컨트롤러)
 
 ```bash
 python scripts/teleop_hybrid.py --arm G1_29 --ee inspire_ftp
@@ -140,11 +172,22 @@ python scripts/teleop_hybrid.py --arm G1_29 --ee inspire_ftp
 - **헤드셋 이동 감지**: 실제로 걸어다니면 로봇도 이동
 - **컨트롤러 조이스틱**: 추가 이동/회전 제어
 
-**옵션:**
-- `--sim`: 시뮬레이션 모드
-- `--no-locomotion`: 하체 제어 비활성화 (상체만)
-- `--head-velocity-scale`: 헤드셋 이동 속도 스케일
-- `--ctrl-velocity-scale`: 컨트롤러 속도 스케일
+## G1 관절 구조 (29 DOF)
+
+| 인덱스 | 관절 |
+|--------|------|
+| 0-5 | 왼쪽 다리 (hip_pitch, hip_roll, hip_yaw, knee, ankle_pitch, ankle_roll) |
+| 6-11 | 오른쪽 다리 |
+| 12-14 | 허리 (yaw, roll, pitch) |
+| 15-21 | 왼팔 (shoulder_pitch/roll/yaw, elbow, wrist_roll/pitch/yaw) |
+| 22-28 | 오른팔 |
+
+## DDS 통신
+
+| Domain ID | 용도 |
+|-----------|------|
+| 0 | 실제 로봇 |
+| 1 | 시뮬레이션 |
 
 ## RL 학습 (Isaac Gym)
 
@@ -168,9 +211,6 @@ python convert_unitree_json_to_lerobot.py --input data/ --output lerobot_data/
 
 # ACT 학습
 python train.py --policy act --dataset lerobot_data/
-
-# 평가
-python eval_g1.py --policy checkpoints/act_latest.pt
 ```
 
 ## 실제 로봇 배포
@@ -184,20 +224,39 @@ python external/lerobot/src/lerobot/robots/unitree_g1/run_g1_server.py
 python scripts/run_lerobot.py --policy gr00t
 ```
 
-## 로봇 모델
+## 트러블슈팅
 
-| 모델 | 경로 | DOF |
-|------|------|-----|
-| G1 기본 | `external/mujoco_menagerie/unitree_g1/` | 29 |
-| G1 + 기본손 | `external/unitree_mujoco/unitree_robots/g1/` | 43 |
-| G1 + Inspire Hand | `external/unitree_ros/robots/g1_description/` | 53 |
+### 1. libstdc++ 버전 오류
+```
+ImportError: CXXABI_1.3.15 not found
+```
+**해결:**
+```bash
+mkdir -p $CONDA_PREFIX/etc/conda/activate.d
+echo 'export LD_PRELOAD=$CONDA_PREFIX/lib/libstdc++.so.6' > $CONDA_PREFIX/etc/conda/activate.d/fix_libstdcxx.sh
+conda deactivate && conda activate G1
+```
 
-## 사전학습 모델
+### 2. unitree_sdk2py import 오류
+```
+ImportError: cannot import name 'b2'
+```
+**해결:** `unitree_sdk2py/__init__.py`에서 b2 import 제거
+```python
+# 수정 전
+from . import idl, utils, core, rpc, go2, b2
+# 수정 후
+from . import idl, utils, core, rpc, go2
+```
 
-| 모델 | 용도 | 실행 |
-|------|------|------|
-| GR00T-WholeBodyControl | 보행 | `--repo-id nepyope/GR00T-WholeBodyControl_g1` |
-| Holosoma | 보행 | `holosoma_locomotion.py` |
+### 3. NumPy 버전 충돌
+```
+A module compiled using NumPy 1.x cannot run in NumPy 2.x
+```
+**해결:**
+```bash
+pip install 'numpy<2'
+```
 
 ## 참고 자료
 
